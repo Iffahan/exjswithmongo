@@ -4,6 +4,7 @@ var userSchema = require('../models/user.model');
 var multer = require('multer');
 var bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
+var tokenMiddleware = require('../middleware/token.middleware');
 
 const saltRounds = 10;
 
@@ -20,7 +21,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage })
 
 // POST route for uploading a file
-router.post('/upload', upload.single('image'), (req, res) => {
+router.post('/upload', [tokenMiddleware, upload.single('image')], (req, res) => {
   res.json({
     success: true,
     message: 'File uploaded successfully',

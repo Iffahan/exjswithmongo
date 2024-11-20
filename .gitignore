@@ -67,3 +67,6 @@ Thumbs.db
 package-lock.json
 yarn.lock
 
+#public imagees
+public/images
+
