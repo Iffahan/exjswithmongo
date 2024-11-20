@@ -3,6 +3,7 @@ var router = express.Router();
 var userSchema = require('../models/user.model');
 var multer = require('multer');
 var bcrypt = require('bcrypt');
+var jwt = require('jsonwebtoken');
 
 const saltRounds = 10;
 
@@ -48,6 +49,8 @@ router.post('/', async (req, res, next) => {
   // Hash the password
   const hashedPassword = await bcrypt.hash(password, parseInt(saltRounds));
 
+  let token = jwt.sign({ name: name }, process.env.JWT_SECRET_KEY);
+
   try {
     const user = new userSchema({
       name: name,
@@ -60,6 +63,7 @@ router.post('/', async (req, res, next) => {
       success: true,
       message: 'User created successfully',
       data: user,
+      token: token,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to create user', error: error.message });
