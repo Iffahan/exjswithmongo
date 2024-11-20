@@ -20,11 +20,9 @@ router.post('/', async function (req, res, next) {
 
 router.put('/:id', async function (req, res, next) {
   let { name, age } = req.body;
-  let user = await userSchema.findById(req.params.id);
-  user.name = name;
-  user.age = age;
-  await user.save();
-  res.send("update success");
+  let { id } = req.params;
+  let user = await userSchema.findByIdAndUpdate(id, { name: name, age: age }, { new: true });
+  res.send(user);
 });
 
 
