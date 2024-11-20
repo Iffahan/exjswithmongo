@@ -3,7 +3,6 @@ var router = express.Router();
 var userSchema = require('../models/user.model');
 var multer = require('multer');
 var bcrypt = require('bcrypt');
-const { eventNames } = require('../app');
 
 const saltRounds = 10;
 
