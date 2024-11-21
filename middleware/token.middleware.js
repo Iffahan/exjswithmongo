@@ -1,19 +1,27 @@
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv');
+dotenv.config();
 
-module.exports = (req, res, next) => {
-    try {
-        let token = req.headers.authorization
-        if (!token) {
-            return res.status(401).json({
-                message: 'No token provided'
-            })
+const secretKey = process.env.JWT_SECRET_KEY
+
+const authenticateJWT = (req, res, next) => {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+        return res.status(403).json({ message: 'Access denied. No token provided.' });
+    }
+
+    // Verify the token
+    jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
+        if (err) {
+            return res.status(403).json({ message: 'Token is invalid or expired.' });
         }
-        req.auth = token
-        next()
-    }
-    catch (error) {
-        return res.status(500).json({
-            message: 'Auth failed'
-        })
-    }
-}
+
+
+        req.user = decoded;
+
+        next();
+    });
+};
+
+module.exports = authenticateJWT;

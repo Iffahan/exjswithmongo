@@ -30,8 +30,9 @@ router.post('/upload', [tokenMiddleware, upload.single('image')], (req, res) => 
 })
 
 /* GET users listing. */
-router.get('/', async (req, res, next) => {
+router.get('/', tokenMiddleware, async (req, res, next) => {
   try {
+    // Only authenticated users can access this route
     const users = await userSchema.find({});
     res.status(200).json({ success: true, data: users });
   } catch (error) {
@@ -39,23 +40,38 @@ router.get('/', async (req, res, next) => {
   }
 });
 
+//GET user by id
+router.get('/:id', tokenMiddleware, async (req, res, next) => {
+  if (!req.params.id) {
+    return res.status(400).json({ success: false, message: 'User ID is required' });
+  }
+  try {
+    const user = await userSchema.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    res.status(200).json({ success: true, data: user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch user', error: error.message });
+  }
+});
+
 router.post('/', async (req, res, next) => {
-  const { name, age, password } = req.body;
+  const { username, password, firstname, lastname } = req.body;
 
   // Input validation
-  if (!name || !age || !password) {
-    return res.status(400).json({ success: false, message: 'Name, age, and password are required' });
+  if (!username || !firstname || !lastname || !password) {
+    return res.status(400).json({ success: false, message: 'some field not proviided' });;
   }
 
   // Hash the password
   const hashedPassword = await bcrypt.hash(password, parseInt(saltRounds));
 
-  let token = jwt.sign({ name: name }, process.env.JWT_SECRET_KEY);
-
   try {
     const user = new userSchema({
-      name: name,
-      age: age,
+      username: username,
+      firstname: firstname,
+      lastname: lastname,
       password: hashedPassword
     });
     await user.save();
@@ -64,41 +80,48 @@ router.post('/', async (req, res, next) => {
       success: true,
       message: 'User created successfully',
       data: user,
-      token: token,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to create user', error: error.message });
   }
 });
 
-router.put('/:id', async function (req, res, next) {
-  let { name, age } = req.body;
-  let { id } = req.params;
-  if (!name || !age) {
-    return res.status(400).send({ error: 'Name and age are required' });
+// PUT route for updating a user
+router.put('/:id', tokenMiddleware, async (req, res) => {
+  const { firstname, lastname } = req.body;
+  const userId = req.params.id;
+  if (!userId) {
+    return res.status(400).json({ success: false, message: 'User ID is required' });
   }
-
   try {
-    let user = await userSchema.findByIdAndUpdate(id, { name, age }, { new: true });
+    const user = await userSchema.findById(userId);
     if (!user) {
-      return res.status(404).send({ error: 'User not found' });
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
-    res.send(user);
-  } catch (err) {
-    res.status(500).send({ error: 'Something went wrong' });
+    user.firstname = firstname;
+    user.lastname = lastname;
+    await user.save();
+    res.status(200).json({ success: true, message: 'User updated successfully', data: user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to update user', error: error.message });
   }
 });
 
-router.delete('/:id', async function (req, res, next) {
-  let { id } = req.params;
+//DELETE route for deleting a user
+router.delete('/:id', tokenMiddleware, async (req, res) => {
+  const userId = req.params.id;
+  if (!userId) {
+    return res.status(400).json({ success: false, message: 'User ID is required' });
+  }
   try {
-    let user = await userSchema.findByIdAndDelete(id);
+    const user = await userSchema.findById(userId);
     if (!user) {
-      return res.status(404).send({ error: 'User not found' });
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
-    res.send({ message: 'User deleted successfully' });
-  } catch (err) {
-    res.status(500).send({ error: 'Something went wrong' });
+    await user.remove();
+    res.status(200).json({ success: true, message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to delete user', error: error.message });
   }
 });
 
