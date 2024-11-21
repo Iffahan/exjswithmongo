@@ -5,6 +5,7 @@ var multer = require('multer');
 var bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
 var tokenMiddleware = require('../middleware/token.middleware');
+const mongoose = require('mongoose');
 
 const saltRounds = 10;
 
@@ -57,53 +58,48 @@ router.get('/:id', tokenMiddleware, async (req, res, next) => {
 });
 
 router.post('/', async (req, res, next) => {
-  const { username, password, firstname, lastname } = req.body;
+  const { username, password, firstname, lastname, age, gender } = req.body;
 
   // Input validation
-  if (!username || !firstname || !lastname || !password) {
-    return res.status(400).json({ success: false, message: 'some field not proviided' });;
+  if (!username || !firstname || !lastname || !password || !age || !gender) {
+    return res.status(400).json({ success: false, message: 'Required fields are missing' });
   }
 
   // Hash the password
   const hashedPassword = await bcrypt.hash(password, parseInt(saltRounds));
+
+  const existingUser = await userSchema.findOne({ username: username });
+  if (existingUser) {
+    return res.status(400).json({ success: false, message: 'Username already taken' });
+  }
 
   try {
     const user = new userSchema({
       username: username,
       firstname: firstname,
       lastname: lastname,
-      password: hashedPassword
+      password: hashedPassword,
+      age: age,
+      gender: gender
     });
+
+    // Save user and generate user_id automatically via mongoose-sequence
     await user.save();
 
     res.status(201).json({
       success: true,
       message: 'User created successfully',
-      data: user,
+      data: {
+        user_id: user.user_id,  // Include user_id in the response
+        username: user.username,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        age: user.age,
+        gender: user.gender
+      },
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to create user', error: error.message });
-  }
-});
-
-// PUT route for updating a user
-router.put('/:id', tokenMiddleware, async (req, res) => {
-  const { firstname, lastname } = req.body;
-  const userId = req.params.id;
-  if (!userId) {
-    return res.status(400).json({ success: false, message: 'User ID is required' });
-  }
-  try {
-    const user = await userSchema.findById(userId);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-    user.firstname = firstname;
-    user.lastname = lastname;
-    await user.save();
-    res.status(200).json({ success: true, message: 'User updated successfully', data: user });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to update user', error: error.message });
   }
 });
 
