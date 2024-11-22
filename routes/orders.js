@@ -11,12 +11,39 @@ var productSchema = require('../models/product.model');
 //GET All Order
 router.get('/', tokenMiddleware, async (req, res, next) => {
     try {
-        const orders = await orderSchema.find({});
+        const { username, productName } = req.query;
+
+        // Build the query
+        const query = {};
+
+        if (username) {
+            const user = await userSchema.findOne({ username });
+            if (user) query.user = user._id;
+        }
+
+        if (productName) {
+            const product = await productSchema.findOne({ name: productName });
+            if (product) query['products.product'] = product._id;
+        }
+
+        const orders = await orderSchema
+            .find(query)
+            .populate({
+                path: 'user',
+                select: 'username',
+            })
+            .populate({
+                path: 'products.product',
+                select: 'name',
+            })
+            .sort({ createdAt: -1 });
+
         res.status(200).json({ success: true, data: orders });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Failed to fetch users', error: error.message });
+        res.status(500).json({ success: false, message: 'Failed to fetch orders', error: error.message });
     }
 });
+
 
 router.post('/', tokenMiddleware, async (req, res, next) => {
     try {
@@ -24,7 +51,9 @@ router.post('/', tokenMiddleware, async (req, res, next) => {
 
         // Validate user
         const user = await userSchema.findById(userId);
-        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
 
         const { products } = req.body;
         if (!products || typeof products !== 'object') {
@@ -33,51 +62,57 @@ router.post('/', tokenMiddleware, async (req, res, next) => {
 
         let totalPrice = 0;
         let outOfStockProducts = [];
-
-        // Transform indexed `products` object into an array
         const productArray = Object.values(products);
+        const productDetails = [];
 
-        // Validate products and calculate total price
-        const productDetails = await Promise.all(
-            productArray.map(async (item) => {
-                const { productId, quantity } = item;
+        // First, validate all products
+        for (const item of productArray) {
+            const { productId, quantity } = item;
 
-                if (!productId || !quantity) {
-                    throw new Error('Each product must have a productId and quantity');
-                }
+            if (!productId || !quantity) {
+                throw new Error('Each product must have a productId and quantity');
+            }
 
-                const product = await productSchema.findById(productId);
-                if (!product) throw new Error(`Product with ID ${productId} not found`);
+            const product = await productSchema.findById(productId);
+            if (!product) {
+                throw new Error(`Product with ID ${productId} not found`);
+            }
 
-                if (product.quantity < quantity) {
-                    // Collect the name of the out-of-stock product
-                    outOfStockProducts.push(product.name);
-                } else {
-                    const price = product.price * quantity;
-                    totalPrice += price;
+            if (typeof quantity !== 'number' || quantity < 1) {
+                throw new Error(`Invalid quantity for product ID ${productId}: Quantity must be a positive number`);
+            }
 
-                    // Deduct stock (optional)
-                    product.quantity -= quantity;
-                    await product.save();
-
-                    return {
-                        product: product._id,
-                        quantity: quantity,
-                        price: product.price,
-                    };
-                }
-            })
-        );
-
-        // If there are out-of-stock products, throw an error with product names
-        if (outOfStockProducts.length > 0) {
-            const error = new Error('Not enough stock for some products');
-            error.statusCode = 400;
-            error.outOfStockProducts = outOfStockProducts;
-            throw error;
+            if (product.quantity < quantity) {
+                outOfStockProducts.push(product.name);
+            } else {
+                // Prepare product details without updating stock yet
+                productDetails.push({
+                    product: product._id,
+                    quantity: quantity,
+                    price: product.price,
+                });
+                totalPrice += product.price * quantity;
+            }
         }
 
-        // Create the order if all products are available
+        // If any product is out of stock, return an error
+        if (outOfStockProducts.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Not enough stock for some products',
+                error: outOfStockProducts, // Return the array of product names
+            });
+        }
+
+        // Deduct stock only after all validations are successful
+        for (const item of productArray) {
+            const { productId, quantity } = item;
+            const product = await productSchema.findById(productId);
+            product.quantity -= quantity;
+            await product.save();
+        }
+
+        // Create the order
         const order = new orderSchema({
             user: user._id,
             products: productDetails,
@@ -87,16 +122,6 @@ router.post('/', tokenMiddleware, async (req, res, next) => {
         await order.save();
         res.status(201).json({ success: true, data: order });
     } catch (error) {
-        // Handle out-of-stock error
-        if (error.outOfStockProducts) {
-            return res.status(error.statusCode || 400).json({
-                success: false,
-                message: error.message,
-                error: error.outOfStockProducts, // Return the array of product names
-            });
-        }
-
-        // Handle other errors
         res.status(400).json({ success: false, message: error.message });
     }
 });
