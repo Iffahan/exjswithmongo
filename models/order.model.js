@@ -6,11 +6,12 @@ const orderSchema = new Schema({
     products: [
         {
             product: { type: Schema.Types.ObjectId, ref: 'products', required: true }, // Reference to the product
-            quantity: { type: Number, required: true }, // Quantity of this product
-            price: { type: Number, required: true }, // Price per unit of this product
+            quantity: { type: Number, required: true },
+            price: { type: Number, required: true }, 
         }
     ],
-    total_price: { type: Number, required: true }, // Total price of the order
+    total_price: { type: Number, required: true },
+    status: { type: String, enum: ['pending', 'completed', 'cancelled'], default: 'pending' },
 }, {
     timestamps: true // Adds createdAt and updatedAt fields
 });

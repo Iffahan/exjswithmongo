@@ -5,9 +5,10 @@ var multer = require('multer');
 var bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
 var tokenMiddleware = require('../middleware/token.middleware');
+var adminMiddleware = require('../middleware/admin.middleware');
 
 //create product
-router.post('/', tokenMiddleware, async function (req, res, next) {
+router.post('/', [tokenMiddleware, adminMiddleware], async function (req, res, next) {
 
     const { name, price, quantity, description } = req.body;
     if (!name || !price || !quantity) {

@@ -17,6 +17,11 @@ const userSchema = new Schema({
         type: String,
         enum: ['male', 'female', 'other'],
     },
+    role: {
+        type: String,
+        enum: ['member', 'admin'], // changed normal_user to member
+        default: 'member', // default role is member
+    },
 }, {
     timestamps: true
 });
