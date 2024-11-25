@@ -242,6 +242,19 @@ router.put('/cancel/:id', tokenMiddleware, async (req, res, next) => {
     }
 });
 
+//Delete order by admin
+router.delete('/:id', [tokenMiddleware, adminMiddleware], async (req, res, next) => {
+    try {
+        const order = await orderSchema.findByIdAndDelete(req.params.id);
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+        res.status(200).json({ success: true, data: order });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: 'Failed to delete order', error: error.message });
+    }
+});
 
 
 module.exports = router;

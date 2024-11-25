@@ -19,14 +19,13 @@ const userSchema = new Schema({
     },
     role: {
         type: String,
-        enum: ['member', 'admin'], // changed normal_user to member
-        default: 'member', // default role is member
+        enum: ['member', 'admin'],
+        default: 'member',
     },
 }, {
     timestamps: true
 });
 
-// Apply the auto-increment plugin to the `user_id` field
 userSchema.plugin(mongooseSequence, { inc_field: 'user_id' });
 
 module.exports = mongoose.model('users', userSchema);

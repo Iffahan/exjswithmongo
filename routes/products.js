@@ -80,7 +80,7 @@ router.put('/:id', tokenMiddleware, async function (req, res, next) {
         })
     }
 
-    const { name, price, quantity } = req.body;
+    const { name, price, quantity, description } = req.body;
 
     if (!name || !price || !quantity || !description) {
         return res.status(400).json({
@@ -106,7 +106,7 @@ router.put('/:id', tokenMiddleware, async function (req, res, next) {
 });
 
 //deele product by id
-router.delete('/:id', tokenMiddleware, async function (req, res, next) {
+router.delete('/:id', [tokenMiddleware, adminMiddleware], async function (req, res, next) {
     if (!req.params.id) {
         return res.status(400).json({
             message: 'Missing required fields'
@@ -116,7 +116,6 @@ router.delete('/:id', tokenMiddleware, async function (req, res, next) {
         const product = await productSchema.findByIdAndDelete(req.params.id);
         return res.status(200).json({
             message: 'Product deleted successfully',
-            product
         })
     } catch (error) {
         return res.status(500).json({

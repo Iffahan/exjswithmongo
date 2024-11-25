@@ -5,6 +5,7 @@ var multer = require('multer');
 var bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
 var tokenMiddleware = require('../middleware/token.middleware');
+var adminMiddleware = require('../middleware/admin.middleware');
 var dotenv = require('dotenv');
 
 dotenv.config();
@@ -176,7 +177,7 @@ router.post('/create-admin', async (req, res, next) => {
 
 
 //DELETE route for deleting a user
-router.delete('/:id', tokenMiddleware, async (req, res) => {
+router.delete('/:id', [tokenMiddleware, adminMiddleware], async (req, res) => {
   const userId = req.params.id;
   if (!userId) {
     return res.status(400).json({ success: false, message: 'User ID is required' });
@@ -186,7 +187,7 @@ router.delete('/:id', tokenMiddleware, async (req, res) => {
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
-    await user.remove();
+    const userDelete = await userSchema.findByIdAndDelete(userId);
     res.status(200).json({ success: true, message: 'User deleted successfully' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to delete user', error: error.message });
