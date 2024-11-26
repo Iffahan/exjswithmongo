@@ -64,4 +64,18 @@ router.post('/login', async (req, res) => {
     }
 });
 
+// POST route for user logout
+router.post('/logout', (req, res) => {
+    try {
+        // Clear the token cookie
+        res.clearCookie('token',             secure: process.env.NODE_ENV === 'production', // Only clear if the app is in production
+            sameSite: 'strict',     // Same security features as the login cookie
+        });
+
+        res.status(200).json({ success: true, message: 'Logged out successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Logout failed', error: error.message });
+    }
+});
+
 module.exports = router;
