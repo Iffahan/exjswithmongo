@@ -36,10 +36,11 @@ router.post('/', [tokenMiddleware, adminMiddleware], async function (req, res, n
 });
 
 //get all products
-router.get('/', tokenMiddleware, async function (req, res, next) {
+router.get('/', async function (req, res, next) {
     try {
         const products = await productSchema.find();
         return res.status(200).json({
+            success: true,
             message: 'Products fetched successfully',
             products
         })
