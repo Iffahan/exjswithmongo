@@ -37,10 +37,18 @@ router.post('/login', async (req, res) => {
         const token = jwt.sign(
             { id: user._id, username: user.username },
             secretKey,
-            { expiresIn: '3h' } // Token expires in 1 hour
+            { expiresIn: '3h' } // Token expires in 3 hours
         );
 
-        // Return user data along with the token
+        // Set token in an HTTP-only cookie
+        res.cookie('token', token, {
+            httpOnly: true,         // Prevents JavaScript access
+            secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+            sameSite: 'strict',     // Protects against CSRF
+            maxAge: 3 * 60 * 60 * 1000, // Cookie expires in 3 hours
+        });
+
+        // Send user details (without token)
         res.status(200).json({
             success: true,
             message: 'Login successful',
@@ -49,7 +57,6 @@ router.post('/login', async (req, res) => {
                 username: user.username,
                 firstname: user.firstname,
                 lastname: user.lastname,
-                token: token,
             },
         });
     } catch (error) {

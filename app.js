@@ -11,45 +11,48 @@ var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var productsRouter = require('./routes/products');
 var authenRouter = require('./routes/authen');
-var orderrsRouter = require('./routes/orders');
+var ordersRouter = require('./routes/orders');
 
 var app = express();
 
 // Enable CORS for requests from your Vue app
 app.use(cors({
   origin: 'http://localhost:8080', // Replace with the actual URL of your Vue app
-  credentials: true // If your app uses cookies or other credentials
+  credentials: true // Allow cookies to be sent across origins
 }));
 
+// Middleware to parse cookies
+app.use(cookieParser());
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
+// Middleware setup
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Routes
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/products', productsRouter);
 app.use('/authen', authenRouter);
-app.use('/orders', orderrsRouter);
+app.use('/orders', ordersRouter);
 
-// catch 404 and forward to error handler
+// Catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));
 });
 
-// error handler
+// Error handler
 app.use(function (err, req, res, next) {
-  // set locals, only providing error in development
+  // Set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  // render the error page
+  // Render the error page
   res.status(err.status || 500);
   res.render('error');
 });
