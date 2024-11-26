@@ -44,6 +44,20 @@ router.get('/', tokenMiddleware, async (req, res, next) => {
   }
 });
 
+//GET my user
+router.get('/me', tokenMiddleware, async (req, res, next) => {
+  try {
+    const user = await userSchema.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    res.status(200).json({ success: true, data: user });
+  }
+  catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch user', error: error.message });
+  }
+});
+
 //GET user by id
 router.get('/:id', tokenMiddleware, async (req, res, next) => {
   if (!req.params.id) {
