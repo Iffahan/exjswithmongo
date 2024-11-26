@@ -10,7 +10,7 @@ var adminMiddleware = require('../middleware/admin.middleware');
 //create product
 router.post('/', [tokenMiddleware, adminMiddleware], async function (req, res, next) {
 
-    const { name, price, quantity, description } = req.body;
+    const { name, price, quantity, description, image } = req.body;
     if (!name || !price || !quantity) {
         return res.status(400).json({
             message: 'Missing required fields'
@@ -22,9 +22,11 @@ router.post('/', [tokenMiddleware, adminMiddleware], async function (req, res, n
             name,
             price,
             quantity,
-            description
+            description,
+            image
         });
         return res.status(200).json({
+            success: true,
             message: 'Product created successfully',
             product
         })
@@ -83,7 +85,7 @@ router.put('/:id', tokenMiddleware, async function (req, res, next) {
 
     const { name, price, quantity, description } = req.body;
 
-    if (!name || !price || !quantity || !description) {
+    if (!name || !price || !quantity || !description || !image) {
         return res.status(400).json({
             message: 'Missing required fields'
         })
@@ -93,9 +95,11 @@ router.put('/:id', tokenMiddleware, async function (req, res, next) {
             name,
             price,
             quantity,
-            description
+            description,
+            image
         }, { new: true });
         return res.status(200).json({
+            success: true,
             message: 'Product updated successfully',
             product
         })
@@ -116,6 +120,7 @@ router.delete('/:id', [tokenMiddleware, adminMiddleware], async function (req, r
     try {
         const product = await productSchema.findByIdAndDelete(req.params.id);
         return res.status(200).json({
+            success: true,
             message: 'Product deleted successfully',
         })
     } catch (error) {

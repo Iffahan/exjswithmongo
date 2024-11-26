@@ -119,7 +119,7 @@ router.post('/', async (req, res, next) => {
 
 //PUT Update User
 router.put('/:id', tokenMiddleware, async (req, res, next) => {
-  const { firstname, lastname, age, gender } = req.body;
+  const { firstname, lastname, age, gender, image, phone, address } = req.body;
   const userId = req.params.id;
   const user = await userSchema.findById(userId);
   if (!user) {
@@ -130,6 +130,9 @@ router.put('/:id', tokenMiddleware, async (req, res, next) => {
     user.lastname = lastname;
     user.age = age;
     user.gender = gender;
+    user.image = image;
+    user.phone = phone;
+    user.address = address;
     await user.save();
     res.status(200).json({ success: true, message: 'User updated successfully', data: user });
   }

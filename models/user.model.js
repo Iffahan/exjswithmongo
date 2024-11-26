@@ -9,6 +9,9 @@ const userSchema = new Schema({
     email: { type: String, unique: true },
     lastname: { type: String },
     password: { type: String },
+    phone: { type: String },
+    address: { type: String },
+    image: { type: String },
     age: {
         type: Number,
         min: 7,
