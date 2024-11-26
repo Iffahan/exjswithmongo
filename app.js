@@ -15,6 +15,13 @@ var orderrsRouter = require('./routes/orders');
 
 var app = express();
 
+// Enable CORS for requests from your Vue app
+app.use(cors({
+  origin: 'http://localhost:8080', // Replace with the actual URL of your Vue app
+  credentials: true // If your app uses cookies or other credentials
+}));
+
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');

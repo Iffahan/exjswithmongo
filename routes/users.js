@@ -61,10 +61,10 @@ router.get('/:id', tokenMiddleware, async (req, res, next) => {
 });
 
 router.post('/', async (req, res, next) => {
-  const { username, password, firstname, lastname, age, gender } = req.body;
+  const { username, password, email } = req.body;
 
   // Input validation
-  if (!username || !firstname || !lastname || !password || !age || !gender) {
+  if (!username || !password || !email) {
     return res.status(400).json({ success: false, message: 'Required fields are missing' });
   }
 
@@ -79,11 +79,8 @@ router.post('/', async (req, res, next) => {
   try {
     const user = new userSchema({
       username: username,
-      firstname: firstname,
-      lastname: lastname,
+      email: email,
       password: hashedPassword,
-      age: age,
-      gender: gender
     });
 
     // Save user and generate user_id automatically via mongoose-sequence
