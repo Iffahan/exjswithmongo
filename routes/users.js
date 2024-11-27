@@ -144,7 +144,30 @@ router.put('/:id', tokenMiddleware, async (req, res, next) => {
   }
 });
 
-// POST route for creating a new admin user
+//update me
+router.put('/', tokenMiddleware, async (req, res, next) => {
+  const { firstname, lastname, age, gender, image, phone, address } = req.body;
+  try {
+    const user = await userSchema.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    user.firstname = firstname;
+    user.lastname = lastname;
+    user.age = age;
+    user.gender = gender;
+    user.image = image;
+    user.phone = phone;
+    user.address = address;
+    await user.save();
+    res.status(200).json({ success: true, message: 'User updated successfully', data: user });
+  }
+  catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to update user', error: error.message });
+  }
+});
+
+// POST route for creating a new admin user)
 router.post('/create-admin', async (req, res, next) => {
   const { secret, username, password } = req.body;
 
