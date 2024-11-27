@@ -12,7 +12,7 @@ var usersRouter = require('./routes/users');
 var productsRouter = require('./routes/products');
 var authenRouter = require('./routes/authen');
 var ordersRouter = require('./routes/orders');
-
+var cartsRouter = require('./routes/carts');
 var app = express();
 
 // Enable CORS for requests from your Vue app
@@ -40,6 +40,7 @@ app.use('/users', usersRouter);
 app.use('/products', productsRouter);
 app.use('/authen', authenRouter);
 app.use('/orders', ordersRouter);
+app.use('/carts', cartsRouter);
 
 // Catch 404 and forward to error handler
 app.use(function (req, res, next) {
