@@ -68,7 +68,8 @@ router.post('/login', async (req, res) => {
 router.post('/logout', (req, res) => {
     try {
         // Clear the token cookie
-        res.clearCookie('token',             secure: process.env.NODE_ENV === 'production', // Only clear if the app is in production
+        res.clearCookie('token', {
+            secure: process.env.NODE_ENV === 'production', // Only clear if the app is in production
             sameSite: 'strict',     // Same security features as the login cookie
         });
 
