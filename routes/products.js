@@ -120,7 +120,6 @@ router.delete('/:id', [tokenMiddleware, adminMiddleware], async function (req, r
     try {
         const product = await productSchema.findByIdAndDelete(req.params.id);
         return res.status(200).json({
-            success: true,
             message: 'Product deleted successfully',
         })
     } catch (error) {
