@@ -83,7 +83,7 @@ router.put('/:id', tokenMiddleware, async function (req, res, next) {
         })
     }
 
-    const { name, price, quantity, description } = req.body;
+    const { name, price, quantity, description, image } = req.body;
 
     if (!name || !price || !quantity || !description || !image) {
         return res.status(400).json({
@@ -120,10 +120,12 @@ router.delete('/:id', [tokenMiddleware, adminMiddleware], async function (req, r
     try {
         const product = await productSchema.findByIdAndDelete(req.params.id);
         return res.status(200).json({
+            success: true,
             message: 'Product deleted successfully',
         })
     } catch (error) {
         return res.status(500).json({
+            success: false,
             message: 'Internal server error'
         })
     }

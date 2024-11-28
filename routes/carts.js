@@ -58,44 +58,44 @@ router.get('/:productId', tokenMiddleware, async (req, res, next) => {
 });
 
 // POST add product to cart
-router.post('/', tokenMiddleware, async (req, res, next) => {
+router.post('/', tokenMiddleware, async (req, res) => {
     try {
         const userId = req.user.id;
         const { productId, quantity } = req.body;
 
         // Validate input
         if (!productId) {
-            return res.status(400).json({ success: false, message: 'Invalid product' });
+            return res.status(400).json({ success: false, message: 'Invalid product ID' });
         }
-        // Validate input
+
         if (!quantity || quantity < 1) {
             return res.status(400).json({ success: false, message: 'Invalid quantity' });
         }
 
+        // Check if the product exists
         const product = await productSchema.findById(productId);
         if (!product) {
             return res.status(404).json({ success: false, message: 'Product not found' });
         }
 
-        // Find the user's cart
+        // Find or create the user's cart
         let cart = await cartSchema.findOne({ user: userId });
-
         if (!cart) {
-            // If cart doesn't exist, create a new one
             cart = new cartSchema({ user: userId, items: [] });
         }
 
         // Check if the product is already in the cart
-        const existingItemIndex = cart.items.findIndex(item => item.product.toString() === productId);
+        const existingItem = cart.items.find(item => item.product.toString() === productId);
 
-        if (existingItemIndex > -1) {
-            // If the product already exists in the cart, update the quantity
-            cart.items[existingItemIndex].quantity += quantity;
+        if (existingItem) {
+            // If product exists, update the quantity
+            existingItem.quantity += quantity;
         } else {
-            // If the product is not in the cart, add it
-            cart.items.push({ product: productId, quantity: quantity });
+            // If not, add it as a new item
+            cart.items.push({ product: productId, quantity });
         }
 
+        // Save the cart
         await cart.save();
 
         res.status(201).json({ success: true, data: cart });
@@ -108,25 +108,29 @@ router.post('/', tokenMiddleware, async (req, res, next) => {
 router.put('/:productId', tokenMiddleware, async (req, res, next) => {
     try {
         const userId = req.user.id;
-        const { quantity } = req.body;
+        const { quantity } = req.body; // New absolute quantity value
         const productId = req.params.productId;
 
+        // Validate input
         if (!quantity || quantity < 1) {
             return res.status(400).json({ success: false, message: 'Invalid quantity' });
         }
 
+        // Find the user's cart
         const cart = await cartSchema.findOne({ user: userId });
         if (!cart) {
             return res.status(404).json({ success: false, message: 'Cart not found' });
         }
 
+        // Find the item in the cart
         const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
         if (itemIndex === -1) {
             return res.status(404).json({ success: false, message: 'Item not found in cart' });
         }
 
-        // Update the quantity of the item
+        // Set the quantity to the exact value
         cart.items[itemIndex].quantity = quantity;
+
         await cart.save();
 
         res.status(200).json({ success: true, data: cart });
@@ -134,6 +138,7 @@ router.put('/:productId', tokenMiddleware, async (req, res, next) => {
         res.status(500).json({ success: false, message: 'Failed to update cart item', error: error.message });
     }
 });
+
 
 // DELETE remove a product from the cart
 router.delete('/:productId', tokenMiddleware, async (req, res, next) => {
